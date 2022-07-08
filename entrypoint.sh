@@ -49,7 +49,7 @@ elif [ -n "${API_TOKEN_GITHUB:=}" ]
 then
 	GIT_CMD_REPOSITORY="https://$DESTINATION_REPOSITORY_USERNAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git"
 else
-	echo "[-] API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one (recommended the SSH_DEPLOY_KEY"
+	echo "[-] API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one in!"
 	exit 1
 fi
 
@@ -60,8 +60,8 @@ echo "[+] Git version"
 git --version
 
 # Setup git
-git config --global user.email "$USER_EMAIL"
-git config --global user.name "$USER_NAME"
+git config --location=global user.email "$USER_EMAIL"
+git config --location=global user.name "$USER_NAME"
 
 echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 {
