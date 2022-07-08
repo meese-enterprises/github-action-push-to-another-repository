@@ -22,7 +22,7 @@ From the repository that this Git Action is executed the directory that contains
 For the repository `https://github.com/cpina/push-to-another-repository-output` is `cpina`.
 
 ### `destination-repository-name` (argument)
-For the repository `https://github.com/cpina/push-to-another-repository-output` is `push-to-another-repository-output`
+For the repository `https://github.com/cpina/push-to-another-repository-output` is `push-to-another-repository-output`.
 
 *Warning:* this GitHub Action currently deletes all the files and directories in the destination repository. The idea is to copy from an `output` directory into the `destination-repository-name` having a copy without any previous files there.
 
@@ -43,8 +43,11 @@ The commit message to be used in the output repository. Optional and defaults to
 
 The string `ORIGIN_COMMIT` is replaced by `$REPOSITORY_URL@commit`.
 
+### `force` (argument) [optional]
+If "true", will force push to the target repo. Use with caution.
+
 ### `target-directory` (argument) [optional]
-The directory to wipe and replace in the target repository.  Defaults to wiping the entire repository
+The directory to wipe and replace in the target repository.  Defaults to wiping the entire repository.
 
 ### `SSH_DEPLOY_KEY` or `API_TOKEN_GITHUB`
 The action, entirely executed in your GitHub continuous integration environment, needs to be able to push to the destination repository.
@@ -61,7 +64,7 @@ This action supports both methods to keep backwards compatibility, because in th
 ### Generate the key files
 
 * `ssh-keygen -t ed25519 -C "your_email@example.com"` (the type ed25519 is recommended by [GitHub documentation](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key))
-* ssh will ask for a file path: `Enter file in which to save the key`: write a new file name. I suggest the default directory and as a filename: `id_github_name_of_your_repository` to avoid overwriting a previous file. If you will be using this action for multiple repositories, you might want to generate different keys for each one. 
+* ssh will ask for a file path: `Enter file in which to save the key`: write a new file name. I suggest the default directory and as a filename: `id_github_name_of_your_repository` to avoid overwriting a previous file. If you will be using this action for multiple repositories, you might want to generate different keys for each one.
 * Leave the passphrase empty (otherwise we would need to pass the passphrase to the GitHub Action)
 
 ### Set up the deployment key

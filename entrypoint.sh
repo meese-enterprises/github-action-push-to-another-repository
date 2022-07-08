@@ -15,6 +15,7 @@ DESTINATION_REPOSITORY_USERNAME="${8}"
 TARGET_BRANCH="${9}"
 COMMIT_MESSAGE="${10}"
 TARGET_DIRECTORY="${11}"
+FORCE="${12}"
 
 if [ -z "$DESTINATION_REPOSITORY_USERNAME" ]
 then
@@ -25,6 +26,8 @@ if [ -z "$USER_NAME" ]
 then
 	USER_NAME="$DESTINATION_GITHUB_USERNAME"
 fi
+
+TARGET_BRANCH_EXISTS=true
 
 # Verify that there (potentially) some access to the destination repository
 # and set up git (with GIT_CMD variable) and GIT_CMD_REPOSITORY
@@ -63,15 +66,21 @@ git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
 
 {
-	git clone --single-branch --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
+	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
 } || {
-	echo "::error::Could not clone the destination repository. Command:"
-	echo "::error::git clone --single-branch --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
-	echo "::error::(Note that if they exist USER_NAME and API_TOKEN is redacted by GitHub)"
-	echo "::error::Please verify that the target repository exist AND that it contains the destination branch name, and is accesible by the API_TOKEN_GITHUB OR SSH_DEPLOY_KEY"
-	exit 1
-
+	{
+		echo "Target branch doesn't exist, fetching main branch"
+		git clone --single-branch "https://$USER_NAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" "$CLONE_DIR"
+		TARGET_BRANCH_EXISTS=false
+	} || {
+		echo "::error::Could not clone the destination repository. Command:"
+		echo "::error::git clone --single-branch --depth 1 --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
+		echo "::error::(Note that if they exist USER_NAME and API_TOKEN is redacted by GitHub)"
+		echo "::error::Please verify that the target repository exist AND that it contains the destination branch name, and is accesible by the API_TOKEN_GITHUB OR SSH_DEPLOY_KEY"
+		exit 1
+	}
 }
+
 ls -la "$CLONE_DIR"
 
 TEMP_DIR=$(mktemp -d)
@@ -126,6 +135,11 @@ ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
 
+if [ "$TARGET_BRANCH_EXISTS" = false ] ; then
+  echo "Creating branch $TARGET_BRANCH"
+  git checkout -b "$TARGET_BRANCH"
+fi
+
 echo "[+] Set directory is safe ($CLONE_DIR)"
 # Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
 # TODO: review before releasing it as a version
@@ -141,6 +155,13 @@ echo "[+] git diff-index:"
 # git diff-index : to avoid doing the git commit failing if there are no changes to be commit
 git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
 
-echo "[+] Pushing git commit"
+if $FORCE; then
+  echo "[+] Force pushing git commit"
+  FORCE_FLAG="-f"
+else
+  echo "[+] Pushing git commit"
+  FORCE_FLAG=""
+fi
+
 # --set-upstream: sets de branch when pushing to a branch that does not exist
-git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH"
+git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
