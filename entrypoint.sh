@@ -1,4 +1,4 @@
-#!/bin/sh -l
+#!/bin/bash
 
 set -e  # if a command fails it stops the execution
 set -u  # script fails if trying to access to an undefined variable
@@ -32,7 +32,7 @@ TARGET_BRANCH_EXISTS=true
 # and set up git (with GIT_CMD variable) and GIT_CMD_REPOSITORY
 if [ -n "${SSH_DEPLOY_KEY:=}" ]
 then
-	# Inspired by https://github.com/leigholiver/commit-with-deploy-key/blob/main/entrypoint.sh , thanks!
+	# Inspired by https://github.com/leigholiver/commit-with-deploy-key/blob/main/entrypoint.sh, thanks!
 	mkdir --parents "$HOME/.ssh"
 	DEPLOY_KEY_FILE="$HOME/.ssh/deploy_key"
 	echo "${SSH_DEPLOY_KEY}" > "$DEPLOY_KEY_FILE"
@@ -92,15 +92,19 @@ mv "$CLONE_DIR/.git" "$TEMP_DIR/.git"
 # $TARGET_DIRECTORY is '' by default
 ABSOLUTE_TARGET_DIRECTORY="$CLONE_DIR/$TARGET_DIRECTORY/"
 
+echo ""
 echo "[+] Deleting $ABSOLUTE_TARGET_DIRECTORY"
 rm -rf "$ABSOLUTE_TARGET_DIRECTORY"
 
+echo ""
 echo "[+] Creating (now empty) $ABSOLUTE_TARGET_DIRECTORY"
 mkdir -p "$ABSOLUTE_TARGET_DIRECTORY"
 
+echo ""
 echo "[+] Listing Current Directory Location"
 ls -al
 
+echo ""
 echo "[+] Listing root Location"
 ls -al /
 
@@ -109,6 +113,7 @@ mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
 # If $SOURCE_DIRECTORIES is empty, the program should exit
 if (( ${#SOURCE_DIRECTORIES[@]} ))
 then
+	echo ""
 	echo "[+] No source directories to copy, exiting program"
 	exit 0
 fi
@@ -118,18 +123,22 @@ for SOURCE_DIRECTORY in $SOURCE_DIRECTORIES
 do
 	if [ ! -d "$SOURCE_DIRECTORY" ]
 	then
+		echo ""
 		echo "[+] Source directory $SOURCE_DIRECTORY does not exist, skipping"
 		continue
 	fi
 
+	echo ""
 	echo "[+] List contents of $SOURCE_DIRECTORY"
 	ls -la "$SOURCE_DIRECTORY"
 
+	echo ""
 	echo "[+] Copying contents of source repository folder '$SOURCE_DIRECTORY' to git repo '$DESTINATION_REPOSITORY_NAME'"
 	cp -ra "$SOURCE_DIRECTORY"/. "$CLONE_DIR/$TARGET_DIRECTORY"
 done
 
 cd "$CLONE_DIR"
+echo ""
 echo "[+] List of files that will be pushed"
 ls -la
 
@@ -138,25 +147,31 @@ COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
 
 if [ "$TARGET_BRANCH_EXISTS" = false ] ; then
+	echo ""
   echo "Creating branch $TARGET_BRANCH"
   git checkout -b "$TARGET_BRANCH"
 fi
 
+echo ""
 echo "[+] Set directory is safe ($CLONE_DIR)"
 # Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
 # TODO: review before releasing it as a version
 git config --global --add safe.directory "$CLONE_DIR"
 
+echo ""
 echo "[+] Adding git commit"
 git add .
 
+echo ""
 echo "[+] git status:"
 git status
 
+echo ""
 echo "[+] git diff-index:"
 # git diff-index : to avoid doing the git commit failing if there are no changes to be commit
 git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
 
+echo ""
 if $FORCE; then
   echo "[+] Forcefully pushing git commit"
   FORCE_FLAG="-f"
