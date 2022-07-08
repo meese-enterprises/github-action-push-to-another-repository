@@ -4,18 +4,17 @@ set -e  # if a command fails it stops the execution
 set -u  # script fails if trying to access to an undefined variable
 
 echo "[+] Action start"
-SOURCE_BEFORE_DIRECTORY="${1}"
-SOURCE_DIRECTORY="${2}"
-DESTINATION_GITHUB_USERNAME="${3}"
-DESTINATION_REPOSITORY_NAME="${4}"
-GITHUB_SERVER="${5}"
-USER_EMAIL="${6}"
-USER_NAME="${7}"
-DESTINATION_REPOSITORY_USERNAME="${8}"
-TARGET_BRANCH="${9}"
-COMMIT_MESSAGE="${10}"
-TARGET_DIRECTORY="${11}"
-FORCE="${12}"
+SOURCE_DIRECTORIES="${1}"
+DESTINATION_GITHUB_USERNAME="${2}"
+DESTINATION_REPOSITORY_NAME="${3}"
+GITHUB_SERVER="${4}"
+USER_EMAIL="${5}"
+USER_NAME="${6}"
+DESTINATION_REPOSITORY_USERNAME="${7}"
+TARGET_BRANCH="${8}"
+COMMIT_MESSAGE="${9}"
+TARGET_DIRECTORY="${10}"
+FORCE="${11}"
 
 if [ -z "$DESTINATION_REPOSITORY_USERNAME" ]
 then
@@ -50,7 +49,7 @@ elif [ -n "${API_TOKEN_GITHUB:=}" ]
 then
 	GIT_CMD_REPOSITORY="https://$DESTINATION_REPOSITORY_USERNAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git"
 else
-	echo "::error::API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one (recommended the SSH_DEPLOY_KEY"
+	echo "[-] API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one (recommended the SSH_DEPLOY_KEY"
 	exit 1
 fi
 
@@ -60,27 +59,28 @@ CLONE_DIR=$(mktemp -d)
 echo "[+] Git version"
 git --version
 
-echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 # Setup git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
 
+echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 {
 	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
 } || {
 	{
-		echo "Target branch doesn't exist, fetching main branch"
+		echo "Target branch doesn't exist, fetching the 'main' branch"
 		git clone --single-branch "https://$USER_NAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" "$CLONE_DIR"
 		TARGET_BRANCH_EXISTS=false
 	} || {
-		echo "::error::Could not clone the destination repository. Command:"
-		echo "::error::git clone --single-branch --depth 1 --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
-		echo "::error::(Note that if they exist USER_NAME and API_TOKEN is redacted by GitHub)"
-		echo "::error::Please verify that the target repository exist AND that it contains the destination branch name, and is accesible by the API_TOKEN_GITHUB OR SSH_DEPLOY_KEY"
+		echo "[-] Could not clone the destination repository. Command:"
+		echo "[-] git clone --single-branch --depth 1 --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
+		echo "[-] (Note that if they exist, USER_NAME and API_TOKEN are redacted by GitHub)"
+		echo "[-] Please verify that the target repository exist AND that it contains the destination branch name, and is accesible by the API_TOKEN_GITHUB OR SSH_DEPLOY_KEY"
 		exit 1
 	}
 }
 
+echo "[+] Listing the contents of the clone directory"
 ls -la "$CLONE_DIR"
 
 TEMP_DIR=$(mktemp -d)
@@ -106,29 +106,31 @@ ls -al /
 
 mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
 
-echo "[+] List contents of $SOURCE_DIRECTORY"
-ls "$SOURCE_DIRECTORY"
-
-echo "[+] Checking if local $SOURCE_DIRECTORY exist"
-if [ ! -d "$SOURCE_DIRECTORY" ]
+# If $SOURCE_DIRECTORIES is empty, the program should exit
+if (( ${#SOURCE_DIRECTORIES[@]} ))
 then
-	echo "ERROR: $SOURCE_DIRECTORY does not exist"
-	echo "This directory needs to exist when push-to-another-repository is executed"
-	echo
-	echo "In the example it is created by ./build.sh: https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L19"
-	echo
-	echo "If you want to copy a directory that exist in the source repository"
-	echo "to the target repository: you need to clone the source repository"
-	echo "in a previous step in the same build section. For example using"
-	echo "actions/checkout@v2. See: https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L16"
-	exit 1
+	echo "[+] No source directories to copy, exiting program"
+	exit 0
 fi
 
-echo "[+] Copying contents of source repository folder $SOURCE_DIRECTORY to folder $TARGET_DIRECTORY in git repo $DESTINATION_REPOSITORY_NAME"
-cp -ra "$SOURCE_DIRECTORY"/. "$CLONE_DIR/$TARGET_DIRECTORY"
-cd "$CLONE_DIR"
+# Loop over all the directories and copy them to the destination
+for SOURCE_DIRECTORY in $SOURCE_DIRECTORIES
+do
+	if [ ! -d "$SOURCE_DIRECTORY" ]
+	then
+		echo "[+] Source directory $SOURCE_DIRECTORY does not exist, skipping"
+		continue
+	fi
 
-echo "[+] Files that will be pushed"
+	echo "[+] List contents of $SOURCE_DIRECTORY"
+	ls -la "$SOURCE_DIRECTORY"
+
+	echo "[+] Copying contents of source repository folder '$SOURCE_DIRECTORY' to git repo '$DESTINATION_REPOSITORY_NAME'"
+	cp -ra "$SOURCE_DIRECTORY"/. "$CLONE_DIR/$TARGET_DIRECTORY"
+done
+
+cd "$CLONE_DIR"
+echo "[+] List of files that will be pushed"
 ls -la
 
 ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
@@ -156,7 +158,7 @@ echo "[+] git diff-index:"
 git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
 
 if $FORCE; then
-  echo "[+] Force pushing git commit"
+  echo "[+] Forcefully pushing git commit"
   FORCE_FLAG="-f"
 else
   echo "[+] Pushing git commit"

@@ -8,15 +8,15 @@ There are two example repositories:
  * [Repository 1](https://github.com/cpina/push-to-another-repository-deploy-keys-example): using SSH deploy keys (recommended)
  * [Repository 2](https://github.com/cpina/push-to-another-repository-example): using a personal access token setup
 
-On a push of the repositories (thanks to the file [.github/workflows/ci.yml](https://github.com/cpina/push-to-another-repository-deploy-keys-example/tree/main/.github/workflows) it uses Pandoc to read the MarkDown file [main.md](https://github.com/cpina/push-to-another-repository-deploy-ssh-example/blob/main/main.md) (via [this step](https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L19) and the example [build.sh](https://github.com/cpina/push-to-another-repository-deploy-keys-example/blob/main/build.sh). build.sh generates the output/ directory configurable via [source-directory](https://github.com/cpina/push-to-another-repository-deploy-keys-example/blob/main/.github/workflows/ci.yml#L27) appears in the [output repository](https://github.com/cpina/push-to-another-repository-output).
+On a push of the repositories (thanks to the file [.github/workflows/ci.yml](https://github.com/cpina/push-to-another-repository-deploy-keys-example/tree/main/.github/workflows) it uses Pandoc to read the MarkDown file [main.md](https://github.com/cpina/push-to-another-repository-deploy-ssh-example/blob/main/main.md) (via [this step](https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L19) and the example [build.sh](https://github.com/cpina/push-to-another-repository-deploy-keys-example/blob/main/build.sh). build.sh generates the output/ directory configurable via [source-directories](https://github.com/meese-enterprises/push-to-another-repository-deploy-keys-example/blob/main/.github/workflows/ci.yml#L27) appears in the [output repository](https://github.com/cpina/push-to-another-repository-output).
 
 Please bear in mind: files in the target repository's specified directory are deleted. This is to make sure that it contains only the files generated on the last run.
 
 There are different variables to set up the behaviour:
 
 ## Inputs
-### `source-directory` (argument)
-From the repository that this Git Action is executed the directory that contains the files to be pushed into the repository.
+### `source-directories` (argument)
+From the repository that this Git Action is executed the directories that contains the files to be pushed into the repository.
 
 ### `destination-github-username` (argument)
 For the repository `https://github.com/cpina/push-to-another-repository-output` is `cpina`.
@@ -112,7 +112,7 @@ Then make the token available to the Github Action following the steps:
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: 'output'
+          source-directories: ['subrepo1/output', 'subrepo2/output']
           destination-github-username: 'cpina'
           destination-repository-name: 'pandoc-test-output'
           user-email: carles3@pina.cat
