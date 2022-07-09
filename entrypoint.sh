@@ -119,15 +119,13 @@ then
 fi
 set -e
 
-# Parses the passed strings to arrays and removes the leading `[` from the YAML parsing
+# Parses the passed strings to arrays
 # https://stackoverflow.com/a/5257398/6456163
 SOURCE_DIRECTORIES_ARRAY=(${SOURCE_DIRECTORIES//\\n/ })
-SOURCE_DIRECTORIES_ARRAY[0]="${SOURCE_DIRECTORIES_ARRAY[0]:1}"
 
 if [ -n "${DESTINATION_DIRECTORY_PREFIXES:=}" ]
 then
 	DESTINATION_DIRECTORY_PREFIXES_ARRAY=(${DESTINATION_DIRECTORY_PREFIXES//\\n/ })
-	DESTINATION_DIRECTORY_PREFIXES_ARRAY[0]="${DESTINATION_DIRECTORY_PREFIXES_ARRAY[0]:1}"
 else
 	# Populate an array of the correct length with empty strings
 	for i in $(seq "$NUM_SOURCE_DIRS"); do
@@ -150,11 +148,6 @@ cd "$CLONE_DIR"
 echo ""
 echo "[+] List of files that will be pushed:"
 ls -la
-
-# Used for local testing, when ran via `./entrypoint.sh [...]`
-# GITHUB_REPOSITORY="$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME"
-# GITHUB_SHA="$(git rev-parse HEAD)"
-# GITHUB_REF="refs/heads/$TARGET_BRANCH"
 
 ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
