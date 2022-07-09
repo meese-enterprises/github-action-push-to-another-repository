@@ -1,4 +1,4 @@
-#!/bin/sh -l
+#!/bin/bash -l
 
 set -e  # if a command fails it stops the execution
 set -u  # script fails if trying to access to an undefined variable
@@ -6,16 +6,17 @@ set -u  # script fails if trying to access to an undefined variable
 echo ""
 echo "[+] Action start"
 SOURCE_DIRECTORIES="${1}"
-DESTINATION_GITHUB_USERNAME="${2}"
-DESTINATION_REPOSITORY_NAME="${3}"
-GITHUB_SERVER="${4}"
-USER_EMAIL="${5}"
-USER_NAME="${6}"
-DESTINATION_REPOSITORY_USERNAME="${7}"
-TARGET_BRANCH="${8}"
-COMMIT_MESSAGE="${9}"
-TARGET_DIRECTORY="${10}"
-FORCE="${11}"
+DESTINATION_DIRECTORY_PREFIXES="${2}"
+DESTINATION_GITHUB_USERNAME="${3}"
+DESTINATION_REPOSITORY_NAME="${4}"
+GITHUB_SERVER="${5}"
+USER_EMAIL="${6}"
+USER_NAME="${7}"
+DESTINATION_REPOSITORY_USERNAME="${8}"
+TARGET_BRANCH="${9}"
+COMMIT_MESSAGE="${10}"
+TARGET_DIRECTORY="${11}"
+FORCE="${12}"
 
 if [ -z "$DESTINATION_REPOSITORY_USERNAME" ]
 then
@@ -54,7 +55,6 @@ else
 	echo "[-] API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one in!"
 	exit 1
 fi
-
 
 CLONE_DIR=$(mktemp -d)
 
@@ -106,6 +106,44 @@ echo "[+] Creating (now empty) $ABSOLUTE_TARGET_DIRECTORY"
 mkdir -p "$ABSOLUTE_TARGET_DIRECTORY"
 
 mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
+
+# https://stackoverflow.com/a/42399738/6456163
+set +e
+NUM_SOURCE_DIRS=$(echo -n "$SOURCE_DIRECTORIES" | grep -c '^')
+NUM_DEST_PREFIXES=$(echo -n "$DESTINATION_DIRECTORY_PREFIXES" | grep -c '^')
+if [ "$NUM_DEST_PREFIXES" -ne 0 ] && [ "$NUM_SOURCE_DIRS" -ne "$NUM_DEST_PREFIXES" ]
+then
+	echo ""
+	echo "[-] The number of source directories ($NUM_SOURCE_DIRS) is different from the number of destination directory prefixes ($NUM_DEST_PREFIXES)"
+	exit 1
+fi
+set -e
+
+# Parses the passed strings to arrays and removes the leading `[` from the YAML parsing
+# https://stackoverflow.com/a/5257398/6456163
+SOURCE_DIRECTORIES_ARRAY=(${SOURCE_DIRECTORIES//\\n/ })
+SOURCE_DIRECTORIES_ARRAY[0]="${SOURCE_DIRECTORIES_ARRAY[0]:1}"
+
+if [ -n "${DESTINATION_DIRECTORY_PREFIXES:=}" ]
+then
+	DESTINATION_DIRECTORY_PREFIXES_ARRAY=(${DESTINATION_DIRECTORY_PREFIXES//\\n/ })
+	DESTINATION_DIRECTORY_PREFIXES_ARRAY[0]="${DESTINATION_DIRECTORY_PREFIXES_ARRAY[0]:1}"
+else
+	# Populate an array of the correct length with empty strings
+	for i in $(seq "$NUM_SOURCE_DIRS"); do
+		DESTINATION_DIRECTORY_PREFIXES_ARRAY[$i]=""
+	done
+fi
+
+# Loop over all the directories and copy them to the right destination
+for i in $(seq "$NUM_SOURCE_DIRS"); do
+	SOURCE_DIRECTORY="${SOURCE_DIRECTORIES_ARRAY[$i]}"
+	DESTINATION_DIRECTORY_PREFIX="${DESTINATION_DIRECTORY_PREFIXES_ARRAY[$i]}"
+
+	echo ""
+	echo "[+] Copying $SOURCE_DIRECTORY to $ABSOLUTE_TARGET_DIRECTORY$DESTINATION_DIRECTORY_PREFIX"
+	cp -r "$SOURCE_DIRECTORY" "$ABSOLUTE_TARGET_DIRECTORY$DESTINATION_DIRECTORY_PREFIX"
+done
 
 # Loop over all the directories and copy them to the destination
 for SOURCE_DIRECTORY in $SOURCE_DIRECTORIES
