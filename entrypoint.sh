@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh -l
 
 set -e  # if a command fails it stops the execution
 set -u  # script fails if trying to access to an undefined variable
@@ -109,14 +109,6 @@ echo "[+] Listing root Location"
 ls -al /
 
 mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
-
-# If $SOURCE_DIRECTORIES is empty, the program should exit
-if (( ${#SOURCE_DIRECTORIES[@]} ))
-then
-	echo ""
-	echo "[+] No source directories to copy, exiting program"
-	exit 0
-fi
 
 # Loop over all the directories and copy them to the destination
 for SOURCE_DIRECTORY in $SOURCE_DIRECTORIES
