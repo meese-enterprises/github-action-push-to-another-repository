@@ -27,6 +27,7 @@ then
 	USER_NAME="$DESTINATION_GITHUB_USERNAME"
 fi
 
+DESTINATION_REPOSITORY="$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME"
 TARGET_BRANCH_EXISTS=true
 
 # Verify that there (potentially) some access to the destination repository
@@ -44,11 +45,11 @@ then
 
 	export GIT_SSH_COMMAND="ssh -i "$DEPLOY_KEY_FILE" -o UserKnownHostsFile=$SSH_KNOWN_HOSTS_FILE"
 
-	GIT_CMD_REPOSITORY="git@$GITHUB_SERVER:$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git"
+	GIT_CMD_REPOSITORY="git@$GITHUB_SERVER:$DESTINATION_REPOSITORY.git"
 
 elif [ -n "${API_TOKEN_GITHUB:=}" ]
 then
-	GIT_CMD_REPOSITORY="https://$DESTINATION_REPOSITORY_USERNAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git"
+	GIT_CMD_REPOSITORY="https://$DESTINATION_REPOSITORY_USERNAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY.git"
 else
 	echo "[-] API_TOKEN_GITHUB and SSH_DEPLOY_KEY are empty. Please fill one in!"
 	exit 1
@@ -71,7 +72,7 @@ echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 } || {
 	{
 		echo "Target branch doesn't exist, fetching the 'main' branch"
-		git clone --single-branch "https://$USER_NAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" "$CLONE_DIR"
+		git clone --single-branch "https://$USER_NAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY.git" "$CLONE_DIR"
 		TARGET_BRANCH_EXISTS=false
 	} || {
 		echo ""
@@ -168,6 +169,4 @@ else
 fi
 
 # --set-upstream: sets de branch when pushing to a branch that does not exist
-#git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
-echo "THE COMMAND WOULD LOOK LIKE THIS:"
-echo "git push $GIT_CMD_REPOSITORY --set-upstream $TARGET_BRANCH $FORCE_FLAG"
+git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
