@@ -131,6 +131,11 @@ echo ""
 echo "[+] List of files that will be pushed:"
 ls -la
 
+# Used for local testing, when ran via `./entrypoint.sh [...]`
+# GITHUB_REPOSITORY="$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME"
+# GITHUB_SHA="$(git rev-parse HEAD)"
+# GITHUB_REF="refs/heads/$TARGET_BRANCH"
+
 ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
@@ -141,9 +146,10 @@ if [ "$TARGET_BRANCH_EXISTS" = false ]; then
   git checkout -b "$TARGET_BRANCH"
 fi
 
+# Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64
+# and https://github.com/cpina/github-action-push-to-another-repository/issues/64
 echo ""
-echo "[+] Set directory is safe ($CLONE_DIR)"
-# Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
+echo "[+] Set directory as safe ($CLONE_DIR)"
 git config --global --add safe.directory "$CLONE_DIR"
 
 echo ""
@@ -159,14 +165,12 @@ echo ""
 echo "[+] git diff-index:"
 git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
 
+# --set-upstream: sets de branch when pushing to a branch that does not exist
 echo ""
-if $FORCE; then
+if [ "$FORCE" = true ]; then
   echo "[+] Forcefully pushing git commit"
-  FORCE_FLAG="-f"
+	git push -f "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH"
 else
   echo "[+] Pushing git commit"
-  FORCE_FLAG=""
+  git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH"
 fi
-
-# --set-upstream: sets de branch when pushing to a branch that does not exist
-git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
