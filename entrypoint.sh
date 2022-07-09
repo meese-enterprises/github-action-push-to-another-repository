@@ -60,8 +60,8 @@ echo "[+] Git version"
 git --version
 
 # Setup git
-git config --location=global user.email "$USER_EMAIL"
-git config --location=global user.name "$USER_NAME"
+git config --global user.email "$USER_EMAIL"
+git config --global user.name "$USER_NAME"
 
 echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 {
