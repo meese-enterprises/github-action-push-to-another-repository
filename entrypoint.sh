@@ -3,6 +3,7 @@
 set -e  # if a command fails it stops the execution
 set -u  # script fails if trying to access to an undefined variable
 
+echo ""
 echo "[+] Action start"
 SOURCE_DIRECTORIES="${1}"
 DESTINATION_GITHUB_USERNAME="${2}"
@@ -30,6 +31,7 @@ TARGET_BRANCH_EXISTS=true
 
 # Verify that there (potentially) some access to the destination repository
 # and set up git (with GIT_CMD variable) and GIT_CMD_REPOSITORY
+GIT_CMD_REPOSITORY=""
 if [ -n "${SSH_DEPLOY_KEY:=}" ]
 then
 	# Inspired by https://github.com/leigholiver/commit-with-deploy-key/blob/main/entrypoint.sh, thanks!
@@ -63,6 +65,7 @@ git --version
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
 
+echo ""
 echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 {
 	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
@@ -72,6 +75,7 @@ echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 		git clone --single-branch "https://$USER_NAME:$API_TOKEN_GITHUB@$GITHUB_SERVER/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" "$CLONE_DIR"
 		TARGET_BRANCH_EXISTS=false
 	} || {
+		echo ""
 		echo "[-] Could not clone the destination repository. Command:"
 		echo "[-] git clone --single-branch --depth 1 --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
 		echo "[-] (Note that if they exist, USER_NAME and API_TOKEN are redacted by GitHub)"
@@ -80,6 +84,7 @@ echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 	}
 }
 
+echo ""
 echo "[+] Listing the contents of the clone directory"
 ls -la "$CLONE_DIR"
 
@@ -138,7 +143,7 @@ ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
 
-if [ "$TARGET_BRANCH_EXISTS" = false ] ; then
+if [ "$TARGET_BRANCH_EXISTS" = false ]; then
 	echo ""
   echo "Creating branch $TARGET_BRANCH"
   git checkout -b "$TARGET_BRANCH"
