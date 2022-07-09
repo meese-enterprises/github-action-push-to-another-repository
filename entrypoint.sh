@@ -137,31 +137,13 @@ fi
 
 # Loop over all the directories and copy them to the right destination
 for i in $(seq "$NUM_SOURCE_DIRS"); do
+	i=$((i-1))
 	SOURCE_DIRECTORY="${SOURCE_DIRECTORIES_ARRAY[$i]}"
 	DESTINATION_DIRECTORY_PREFIX="${DESTINATION_DIRECTORY_PREFIXES_ARRAY[$i]}"
 
 	echo ""
 	echo "[+] Copying $SOURCE_DIRECTORY to $ABSOLUTE_TARGET_DIRECTORY$DESTINATION_DIRECTORY_PREFIX"
 	cp -r "$SOURCE_DIRECTORY" "$ABSOLUTE_TARGET_DIRECTORY$DESTINATION_DIRECTORY_PREFIX"
-done
-
-# Loop over all the directories and copy them to the destination
-for SOURCE_DIRECTORY in $SOURCE_DIRECTORIES
-do
-	if [ ! -d "$SOURCE_DIRECTORY" ]
-	then
-		echo ""
-		echo "[+] Source directory $SOURCE_DIRECTORY does not exist, skipping"
-		continue
-	fi
-
-	echo ""
-	echo "[+] List contents of $SOURCE_DIRECTORY:"
-	ls -la "$SOURCE_DIRECTORY"
-
-	echo ""
-	echo "[+] Copying contents of source repository folder '$SOURCE_DIRECTORY' to git repo '$DESTINATION_REPOSITORY_NAME'"
-	cp -ra "$SOURCE_DIRECTORY"/. "$CLONE_DIR/$TARGET_DIRECTORY"
 done
 
 cd "$CLONE_DIR"
