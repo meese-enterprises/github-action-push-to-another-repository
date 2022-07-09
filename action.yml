@@ -6,6 +6,11 @@ inputs:
   source-directories:
     description: Source directories from the origin
     required: true
+  destination-directory-prefixes:
+    description: >-
+      [Optional] Destination directory prefixes, paired in order with the source directories
+    default: ""
+    required: false
   destination-github-username:
     description: Name of the destination username/organization
     required: true
@@ -55,6 +60,7 @@ runs:
   image: Dockerfile
   args:
     - "${{ inputs.source-directories }}"
+    - "${{ inputs.destination-directory-prefixes }}"
     - "${{ inputs.destination-github-username }}"
     - "${{ inputs.destination-repository-name }}"
     - "${{ inputs.github-server }}"

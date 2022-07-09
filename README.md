@@ -18,6 +18,9 @@ There are different variables to set up the behaviour:
 ### `source-directories` (argument)
 From the repository that this Git Action is executed the directories that contains the files to be pushed into the repository.
 
+### `destination-directory-prefixes` (argument) [optional]
+If you have multiple directories in the source repository, you can specify the prefixes **in order** that each folder will be copied into in the destination folder.
+
 ### `destination-github-username` (argument)
 For the repository `https://github.com/cpina/push-to-another-repository-output` is `cpina`.
 
@@ -57,8 +60,6 @@ There are two options to do this:
  * Create a GitHub Personal Authentication Token: the token has access to all your repositories
 
 Someone with write access to your repository or this action, could technically add code to leak the key. Thus, *it is recommended to use the SSH deploy key method to minimise repercusions* if this was the case.
-
-This action supports both methods to keep backwards compatibility, because in the beginning it only supported the GitHub Personal Authentication token.
 
 ## Setup with SSH deploy key
 ### Generate the key files
@@ -106,26 +107,23 @@ Then make the token available to the Github Action following the steps:
 
 ## Example usage
 ```yaml
-      - name: Pushes to another repository
-        uses: cpina/github-action-push-to-another-repository@main
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source-directories: ['subrepo1/output', 'subrepo2/output']
-          destination-github-username: 'cpina'
-          destination-repository-name: 'pandoc-test-output'
-          user-email: carles3@pina.cat
-          target-branch: main
+- name: Pushes to another repository
+  uses: meese-enterprises/github-action-push-to-another-repository@main
+  env:
+    SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+    API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+  with:
+    source-directories: |
+      frontend/client/doc
+      frontend/dialogs/doc
+    destination-directory-prefixes: |
+      client
+      dialogs
+    target-directory: src/api
+    destination-github-username: fake-username
+    destination-repository-name: fake-repository
+    user-email: fake@email.com
+    target-branch: main
 ```
-(you only need `SSH_DEPLOY_KEY` or `API_TOKEN_GITHUB` depending on the method that you used)
 
-Working example:
-
-https://github.com/cpina/push-to-another-repository-deploy-keys-example/blob/main/.github/workflows/ci.yml
-
-It generates files from:
-https://github.com/cpina/push-to-another-repository-deploy-keys-example
-
-To:
-https://github.com/cpina/push-to-another-repository-output
+(you only need `SSH_DEPLOY_KEY` or `API_TOKEN_GITHUB`, depending on the method that you used)
