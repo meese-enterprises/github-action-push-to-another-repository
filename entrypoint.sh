@@ -31,7 +31,6 @@ TARGET_BRANCH_EXISTS=true
 
 # Verify that there (potentially) some access to the destination repository
 # and set up git (with GIT_CMD variable) and GIT_CMD_REPOSITORY
-GIT_CMD_REPOSITORY=""
 if [ -n "${SSH_DEPLOY_KEY:=}" ]
 then
 	# Inspired by https://github.com/leigholiver/commit-with-deploy-key/blob/main/entrypoint.sh, thanks!
@@ -85,7 +84,7 @@ echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 }
 
 echo ""
-echo "[+] Listing the contents of the clone directory"
+echo "[+] Listing the contents of the clone directory:"
 ls -la "$CLONE_DIR"
 
 TEMP_DIR=$(mktemp -d)
@@ -105,14 +104,6 @@ echo ""
 echo "[+] Creating (now empty) $ABSOLUTE_TARGET_DIRECTORY"
 mkdir -p "$ABSOLUTE_TARGET_DIRECTORY"
 
-echo ""
-echo "[+] Listing Current Directory Location"
-ls -al
-
-echo ""
-echo "[+] Listing root Location"
-ls -al /
-
 mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
 
 # Loop over all the directories and copy them to the destination
@@ -126,7 +117,7 @@ do
 	fi
 
 	echo ""
-	echo "[+] List contents of $SOURCE_DIRECTORY"
+	echo "[+] List contents of $SOURCE_DIRECTORY:"
 	ls -la "$SOURCE_DIRECTORY"
 
 	echo ""
@@ -136,7 +127,7 @@ done
 
 cd "$CLONE_DIR"
 echo ""
-echo "[+] List of files that will be pushed"
+echo "[+] List of files that will be pushed:"
 ls -la
 
 ORIGIN_COMMIT="https://$GITHUB_SERVER/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
@@ -152,7 +143,6 @@ fi
 echo ""
 echo "[+] Set directory is safe ($CLONE_DIR)"
 # Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
-# TODO: review before releasing it as a version
 git config --global --add safe.directory "$CLONE_DIR"
 
 echo ""
@@ -163,9 +153,9 @@ echo ""
 echo "[+] git status:"
 git status
 
+# git diff-index: avoids the git commit failing if there are no changes
 echo ""
 echo "[+] git diff-index:"
-# git diff-index : to avoid doing the git commit failing if there are no changes to be commit
 git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
 
 echo ""
@@ -178,4 +168,6 @@ else
 fi
 
 # --set-upstream: sets de branch when pushing to a branch that does not exist
-git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
+#git push "$GIT_CMD_REPOSITORY" --set-upstream "$TARGET_BRANCH" "$FORCE_FLAG"
+echo "THE COMMAND WOULD LOOK LIKE THIS:"
+echo "git push $GIT_CMD_REPOSITORY --set-upstream $TARGET_BRANCH $FORCE_FLAG"
